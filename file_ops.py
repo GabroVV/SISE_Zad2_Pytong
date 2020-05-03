@@ -1,11 +1,14 @@
 import pandas as pd
-import tensorflow as tf
-import xlrd
 
 
 def xlsx_to_dataset(path):
     df = pd.read_excel(path).drop('Unnamed: 0', 1)
     return df
-    # target = df[['reference x', 'reference y']].copy()
-    # df = df.drop(['reference x', 'reference y'], 1)
-    # return tf.data.Dataset.from_tensor_slices((df.values, target.values))
+
+
+def concat_xlsx_files_into_data_frame(path_wo_number, number_arr):
+    data_frames = []
+    for i in number_arr:
+        df = xlsx_to_dataset(path_wo_number + str(i) + ".xlsx")
+        data_frames.append(df)
+    return pd.concat(data_frames)
