@@ -1,28 +1,27 @@
 import file_ops as fo
 import pandas as pd
-
 import matplotlib.pyplot as plt
-
-import tensorflow as tf
 import seaborn as sns
 from tensorflow import keras
 from tensorflow.keras import layers
+from tensorflow.keras import initializers
 import tensorflow_docs as tfdocs
 import tensorflow_docs.modeling
 
 
 def build_model():
+    initializer = initializers.RandomNormal(mean=0.0, stddev=0.05)
     _model = keras.Sequential([
-        layers.Dense(64, activation='relu', input_shape=[2, ]),
-        layers.Dense(128, activation='relu'),
-        layers.Dense(128, activation='relu'),
-        layers.Dense(2)
+        layers.Dense(32, activation='relu', input_shape=[2, ],
+                     kernel_initializer=initializer),
+        layers.Dense(64, activation='relu', kernel_initializer=initializer),
+        layers.Dense(64, activation='relu', kernel_initializer=initializer),
+        layers.Dense(2, activation='linear', kernel_initializer=initializer)
     ])
 
-    optimizer = tf.keras.optimizers.RMSprop(0.001)
-
     _model.compile(loss='mse',
-                   optimizer=optimizer,
+                   optimizer='adam',
+
                    metrics=['mae', 'mse'])
     return _model
 
@@ -50,16 +49,17 @@ if __name__ == '__main__':
     train_dataset = train_dataset.drop(columns=["reference x", "reference y"])
 
     model = build_model()
-    EPOCHS = 100
+    model.summary()
+    EPOCHS = 500
     history = model.fit(
         train_dataset, train_labels,
-        epochs=EPOCHS, validation_split=0.2, verbose=0,
+        epochs=EPOCHS, validation_split=0.1, verbose=0,
         callbacks=[tfdocs.modeling.EpochDots()])
 
     hist = fo.pd.DataFrame(history.history)
     hist['epoch'] = history.epoch
+    print("\n")
     print(hist.tail())
-    print(history)
 
     final_test_data_predictions = model.predict(final_test_data_measure)
     final_test_data_predictions_data_frame = pd.DataFrame(final_test_data_predictions, columns=['x', 'y'])
@@ -71,5 +71,4 @@ if __name__ == '__main__':
     sns.relplot(x="measurement x", y="measurement y",
                 data=final_test_data_measure)
     plt.show()
-
     final_test_data_predictions_data_frame.to_clipboard(excel=True)
